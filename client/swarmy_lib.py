@@ -140,8 +140,8 @@ def follow(speed, treshold_min, treshold_max, addr):    # Takes speed as int, tr
             l, r = 0, 0         # If the IR values aren't between
                                 # the tresholds, stop moving.
 
-        motor_left(l, addr)     # Send the left and right
-        motor_right(r, addr)    # motor speeds to the Swarmy.
+    motor_left(l, addr)     # Send the left and right
+    motor_right(r, addr)    # motor speeds to the Swarmy.
 
 
 
@@ -195,5 +195,5 @@ def keep_distance(speed, treshold, addr):   # Takes speed as int, treshold
             l, r = 0, 0     # If the Swarmy isn't to close
                             # to an other, stop moving.
 
-        motor_left(l, addr)     # Send the left and right
-        motor_right(r, addr)    # motor speeds to the Swarmy.
+    motor_left(l, addr)     # Send the left and right
+    motor_right(r, addr)    # motor speeds to the Swarmy.
