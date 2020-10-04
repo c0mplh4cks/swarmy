@@ -2,6 +2,7 @@
 
   Swarmy
   by: c0mplh4cks
+  version 1.0.3
 
   * Description *
     This is the code which is supposed to run
@@ -80,7 +81,7 @@ int motorB(int speed)                       // Change speed of motor B.
 
 
 /* === Read Packet Function === */
-void read_packet()
+String read_packet()
 {
 
   char command = packet[0];
@@ -95,11 +96,15 @@ void read_packet()
   int value = build.toInt();
 
 
+
   int out;
 
   if (command == 'A') { out = motorA(value); }
   if (command == 'B') { out = motorB(value); }
 
+
+
+  return String(out);
 }
 
 
@@ -159,7 +164,7 @@ void setup()
 void loop()
 {
 
-  int packetSize = Udp.parsePacket();       // Receiving packet
+  int packetSize = Udp.parsePacket();       // Receiving packet.
   if (packetSize)
   {
 
@@ -170,10 +175,13 @@ void loop()
     int len = Udp.read(packet, 255);
     if (len > 0) { packet[len] = 0; }
 
-    //Serial.print("Packet Data: ");
-    //Serial.println(packet);
 
-    read_packet();
+    String response = read_packet();      // Reading packet and execute.
+
+
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());    // Sending response back.
+    Udp.write(response.c_str());
+    Udp.endPacket();
   }
 
 
