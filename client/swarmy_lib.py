@@ -23,7 +23,8 @@
 
 
 # === Importing Library's === #
-from socket import socket, AF_INET, SOCK_DGRAM      # Import needed for networking.
+from socket import socket, AF_INET, SOCK_DGRAM, timeout      # Import needed for networking.
+from time import sleep
 
 
 
@@ -33,9 +34,31 @@ from socket import socket, AF_INET, SOCK_DGRAM      # Import needed for networki
 def send(msg, addr):                    # Networking Functions which
     s = socket(AF_INET, SOCK_DGRAM)     # allows to communicate with
     s.bind(("0.0.0.0", 4242))           # the Swarmy. Takes message
-                                        # as string and the address
-    s.sendto(msg.encode(), addr)        # of the Swarmy as tuple (ip, port).
-    rsp, addr = s.recvfrom(1024)
+
+    try:                                # as string and the address
+        s.sendto(msg.encode(), addr)    # of the Swarmy as tuple (ip, port).
+    except KeyboardInterrupt:
+        pass
+
+    s.close()
+    return 1
+
+
+
+def send_recv(msg, addr):               # Same Function as above
+    s = socket(AF_INET, SOCK_DGRAM)     # except this one requires
+    s.settimeout(0.05)                  # the Swarmy to respond.
+    s.bind(("0.0.0.0", 4242))
+
+    while True:
+        try:
+            s.sendto(msg.encode(), addr)
+            rsp, addr = s.recvfrom(1024)
+            break
+        except timeout:
+            sleep(0.05)
+        except KeyboardInterrupt:
+            break
 
     s.close()
     return int( rsp.decode() )
@@ -57,12 +80,12 @@ def motor_right(speed, addr):           # Same parameters as
 
 def light_switch(bool, addr):           # Takes bool as boolean
     msg = "L{};".format(bool)           # and addr as tuple (ip, port).
-    return send(msg, addr)
+    return send_recv(msg, addr)
 
 
 def light_sensor(id, addr):             # Takes id of sensor as
     msg = "I{};".format(id)             # int and addr as
-    return send(msg, addr)              # tuple (ip, port).
+    return send_recv(msg, addr)         # tuple (ip, port).
 
 
 
