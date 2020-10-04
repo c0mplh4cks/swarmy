@@ -2,9 +2,6 @@
 from readchar import readchar
 from time import sleep
 from sys import path
-
-path.insert(0, "/home/c0mplh4cks/coding/swarmy/client/")
-
 import swarmy_lib as s
 
 
@@ -14,7 +11,7 @@ speed = 1000
 turnspeed = 300
 
 devices = [
-    ("rapidice", 8888),
+    ("", 8888),
 ]
 
 
