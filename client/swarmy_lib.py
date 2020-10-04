@@ -2,7 +2,7 @@
 
     Swarmy Library
     by: c0mplh4cks
-    version 1.0.0
+    version 1.0.2
 
     This code is focused on functional programming to keep it simple.
     Use of objects is minimized as much as possible.
@@ -34,9 +34,9 @@ from time import sleep
 def send(msg, addr):                    # Networking Functions which
     s = socket(AF_INET, SOCK_DGRAM)     # allows to communicate with
     s.bind(("0.0.0.0", 4242))           # the Swarmy. Takes message
-
-    try:                                # as string and the address
-        s.sendto(msg.encode(), addr)    # of the Swarmy as tuple (ip, port).
+                                        # as string and the address
+    try:                                # of the Swarmy as tuple (ip, port).
+        s.sendto(msg.encode(), addr)
     except KeyboardInterrupt:
         pass
 
