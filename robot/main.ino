@@ -83,15 +83,18 @@ void read_packet()
 {
 
   char command = packet[0];
-  char value[5];
+  String value = "";
+  int out;
 
   for (int i=0; i<5; i++)
   {
     if (packet[i+1] == ';') { break; }
-    value[i] = packet[i+1];
+    value = value + packet[i+1];
   }
 
-  Serial.println(value);
+  out = value.toInt()
+
+  Serial.println(out);
 
 }
 
