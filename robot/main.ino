@@ -2,7 +2,7 @@
 
   Swarmy
   by: c0mplh4cks
-  version 1.0.3
+  version 1.0.4
 
   * Description *
     This is the code which is supposed to run
@@ -78,6 +78,56 @@ int motorB(int speed)                       // Change speed of motor B.
 
 
 
+int irSensor(int id)
+{
+
+  if (id == 0) {
+    pcf8574.digitalWrite(0, LOW);
+    pcf8574.digitalWrite(1, LOW);
+    pcf8574.digitalWrite(2, LOW);
+
+  } else if (id == 1) {
+    pcf8574.digitalWrite(0, HIGH);
+    pcf8574.digitalWrite(1, LOW);
+    pcf8574.digitalWrite(2, LOW);
+
+  } else if (id == 2) {
+    pcf8574.digitalWrite(0, LOW);
+    pcf8574.digitalWrite(1, HIGH);
+    pcf8574.digitalWrite(2, LOW);
+
+  } else if (id == 3) {
+    pcf8574.digitalWrite(0, HIGH);
+    pcf8574.digitalWrite(1, HIGH);
+    pcf8574.digitalWrite(2, LOW);
+
+  } else if (id == 4) {
+    pcf8574.digitalWrite(0, LOW);
+    pcf8574.digitalWrite(1, LOW);
+    pcf8574.digitalWrite(2, HIGH);
+
+  } else if (id == 5) {
+    pcf8574.digitalWrite(0, HIGH);
+    pcf8574.digitalWrite(1, LOW);
+    pcf8574.digitalWrite(2, HIGH);
+
+  } else if (id == 6) {
+    pcf8574.digitalWrite(0, LOW);
+    pcf8574.digitalWrite(1, HIGH);
+    pcf8574.digitalWrite(2, HIGH);
+
+  } else {
+    pcf8574.digitalWrite(0, HIGH);
+    pcf8574.digitalWrite(1, HIGH);
+    pcf8574.digitalWrite(2, HIGH);
+
+  }
+
+  return analogRead(A0);
+}
+
+
+
 
 
 /* === Read Packet Function === */
@@ -101,6 +151,7 @@ String read_packet()
 
   if (command == 'A') { out = motorA(value); }
   if (command == 'B') { out = motorB(value); }
+  if (command == 'I') { out = irSensor(value); }
 
 
 
