@@ -82,16 +82,17 @@ def light_sensor(id, addr):             # Takes id of sensor as
 
 
 # === Behavior Example Functions === #
-def follow(speed, treshold_min, treshold_max, addr)
+def follow(speed, treshold_min, treshold_max, addr):    # Takes speed as int, treshold
+                                                        # as int and addr as tuple (ip, port).
 
+    for id in range(8):                                 # Repeat the code for each sensor.
+        value = light_sensor(id, addr)                  # Save sensor value as a variable.
 
-    for id in range(8):
-        value = light_sensor(id, addr)
+        if treshold_min < value < treshold_max:         # Check if sensor value is between
+                                                        # the tresholds.
 
-        if treshold_min < value < treshold_max:
-
-            if id == 0:     # North         # If the ID of the sensor of the low value
-                l = speed                   # is 0, than use the given speeds.
+            if id == 0:     # North         # If the ID of the sensor is 0,
+                l = speed                   # then use the given speeds.
                 r = speed                   # Goes the same way for the other
                                             # ID conditions.
             elif id == 1:   # North East
@@ -143,10 +144,10 @@ def keep_distance(speed, treshold, addr):   # Takes speed as int, treshold
         value = light_sensor(id, addr)      # Save sensor value as a variable.
 
         if value < treshold:                # Check if sensor value is getting lower
-                                            # than treshold.
+                                            # then the treshold value.
 
-            if id == 0:     # North         # If the ID of the sensor of the low value
-                l = -speed                  # is 0, than use the given speeds.
+            if id == 0:     # North         # If the ID of the sensor is 0,
+                l = -speed                  # then use the given speeds.
                 r = -speed                  # Goes the same way for the other
                                             # ID conditions.
             elif id == 1:   # North East
