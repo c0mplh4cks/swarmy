@@ -11,15 +11,16 @@
 */
 
 
+
 /* === Including Dependencies === */
-#include "Arduino.h"
+#include <Arduino.h>
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
 #include "PCF8574.h"
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
+#include "Wire.h"
+#include "Adafruit_Sensor.h"
 
 
 
@@ -55,6 +56,49 @@ char packet[255];                           // Packet buffer.
 
 
 
+/* === Write and Read Functions === */
+int motor_control()
+{
+
+  /* Writing Motor speeds */
+  if (MotorA >= 0) { digitalWrite(DA, LOW); }
+  else { digitalWrite(DA, HIGH); }
+
+  if (MotorB >= 0) { digitalWrite(DB, LOW); }
+  else { digitalWrite(DB, HIGH); }
+
+  analogWrite(PWMA, MotorA);
+  analogWrite(PWMB, MotorB);
+
+  return 1;
+
+}
+
+
+
+
+
+/* === Read Packet Function === */
+void read_packet()
+{
+
+  char command = packet[0];
+  char value[5];
+
+  for (int i=0; i<5; i++)
+  {
+    if (packet[i+1] == ';') { break; }
+    value[i] = packet[i+1];
+  }
+
+  Serial.println(value);
+
+}
+
+
+
+
+
 /* === Setup === */
 void setup()
 {
@@ -68,7 +112,7 @@ void setup()
   }
   pcf8574.begin();
 
-  pinMode(0, INPUT_PULLUP)                  // Setting up Flash button.
+  pinMode(0, INPUT_PULLUP);                 // Setting up Flash button.
 
   pinMode(PWMA, OUTPUT);                    // Setting up pins required.
   pinMode(PWMB, OUTPUT);                    // for controlling motors.
@@ -108,17 +152,21 @@ void setup()
 void loop()
 {
 
-  int packetSize = Udp.parsePacket();
+  int packetSize = Udp.parsePacket();       // Receiving packet
   if (packetSize)
   {
+
+
     Serial.print("Received UDP packet from: ");
     Serial.println( Udp.remoteIP().toString().c_str() );
 
     int len = Udp.read(packet, 255);
     if (len > 0) { packet[len] = 0; }
 
-    Serial.print("Packet Data: ");
-    Serial.println(packet);
+    //Serial.print("Packet Data: ");
+    //Serial.println(packet);
+
+    read_packet();
   }
 
 
