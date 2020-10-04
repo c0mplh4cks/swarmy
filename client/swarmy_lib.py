@@ -2,6 +2,7 @@
 
     Swarmy Library
     by: c0mplh4cks
+    version 1.0.0
 
     This code is focused on functional programming to keep it simple.
     Use of objects is minimized as much as possible.
@@ -15,19 +16,6 @@
         the software.
 
 
-
-    * Changes which need to be made for this to work. *
-
-        - NodeMcu must use UDP instead of TCP
-        - Swarmy must be able to turn on/off the IR lights
-                1 for lights on and 0 for lights off
-        - Messages send back from Swarmy to laptop must
-                only contain one integer.
-        - Swarmy must respond the IR sensor data
-                corrosponding to the requested
-                sensor ID.
-
-
 """
 
 
@@ -36,7 +24,6 @@
 
 # === Importing Library's === #
 from socket import socket, AF_INET, SOCK_DGRAM      # Import needed for networking.
-from time import sleep                              # Import needed for timing.
 
 
 
