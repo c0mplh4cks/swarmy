@@ -30,10 +30,6 @@
 PCF8574 pcf8574(0x20);
 WiFiUDP Udp;
 
-int MotorA;
-int MotorB;
-
-
 //
 
 int PWMA = 14;                              // Defining PINs.
@@ -57,21 +53,26 @@ char packet[255];                           // Packet buffer.
 
 
 /* === Write and Read Functions === */
-int motor_control()
+int motorA(int speed)                       // Change speed of motor A.
 {
-
-  /* Writing Motor speeds */
-  if (MotorA >= 0) { digitalWrite(DA, LOW); }
+  if (speed >= 0) { digitalWrite(DA, LOW); }
   else { digitalWrite(DA, HIGH); }
 
-  if (MotorB >= 0) { digitalWrite(DB, LOW); }
-  else { digitalWrite(DB, HIGH); }
-
-  analogWrite(PWMA, MotorA);
-  analogWrite(PWMB, MotorB);
+  analogWrite(PWMA, speed);
 
   return 1;
+}
 
+
+
+int motorB(int speed)                       // Change speed of motor B.
+{
+  if (speed >= 0) { digitalWrite(DB, LOW); }
+  else { digitalWrite(DB, HIGH); }
+
+  analogWrite(PWMB, speed);
+
+  return 1;
 }
 
 
@@ -83,18 +84,21 @@ void read_packet()
 {
 
   char command = packet[0];
-  String value = "";
-  int out;
+  String build = "";
 
   for (int i=0; i<5; i++)
   {
     if (packet[i+1] == ';') { break; }
-    value = value + packet[i+1];
+    build = build + packet[i+1];
   }
 
-  out = value.toInt()
+  int value = build.toInt();
 
-  Serial.println(out);
+
+  int out;
+
+  if (command == 'A') { out = motorA(value); }
+  if (command == 'B') { out = motorB(value); }
 
 }
 
