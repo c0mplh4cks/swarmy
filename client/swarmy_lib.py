@@ -33,7 +33,7 @@ from time import sleep
 # === Networking === #
 def send(msg, addr):                    # Networking Functions which
     s = socket(AF_INET, SOCK_DGRAM)     # allows to communicate with
-    s.bind(("0.0.0.0", 4242))           # the Swarmy. Takes message
+                                        # the Swarmy. Takes message
                                         # as string and the address
     try:                                # of the Swarmy as tuple (ip, port).
         s.sendto(msg.encode(), addr)
@@ -45,23 +45,24 @@ def send(msg, addr):                    # Networking Functions which
 
 
 
-def send_recv(msg, addr):               # Same Function as above
+def send_recv(msg, addr, port):         # Same Function as above
     s = socket(AF_INET, SOCK_DGRAM)     # except this one requires
     s.settimeout(0.05)                  # the Swarmy to respond.
-    s.bind(("0.0.0.0", 4242))
+    s.bind(("0.0.0.0", port))
 
     while True:
         try:
             s.sendto(msg.encode(), addr)
             rsp, addr = s.recvfrom(1024)
-            break
+            s.close()
+            return int( rsp.decode() )
         except timeout:
             sleep(0.05)
         except KeyboardInterrupt:
             break
 
     s.close()
-    return int( rsp.decode() )
+    return 0
 
 
 
@@ -78,25 +79,35 @@ def motor_right(speed, addr):           # Same parameters as
     return send(msg, addr)
 
 
-def light_switch(bool, addr):           # Takes bool as boolean
+def light_switch(bool, addr, port):     # Takes bool as boolean
     msg = "L{};".format(bool)           # and addr as tuple (ip, port).
-    return send_recv(msg, addr)
+    return send_recv(msg, addr, port)
 
 
-def light_sensor(id, addr):             # Takes id of sensor as
+def light_sensor(id, addr, port):       # Takes id of sensor as
     msg = "I{};".format(id)             # int and addr as
-    return send_recv(msg, addr)         # tuple (ip, port).
+    return send_recv(msg, addr, port)   # tuple (ip, port).
+
+
+def led_display(id, r, g, b, addr):
+    msg = "C{};{};{};{};".format(id, r, g, b)
+    return send(msg, addr)
+
+
+def text_display(first, second, third, addr):
+    msg = "D{};{};{};".format(first, second, third)
+    return send(msg, addr)
 
 
 
 
 
 # === Behavior Example Functions === #
-def follow(speed, treshold_min, treshold_max, addr):    # Takes speed as int, treshold
-                                                        # as int and addr as tuple (ip, port).
+def follow(speed, treshold_min, treshold_max, addr, port):      # Takes speed as int, treshold
+                                                                # as int and addr as tuple (ip, port).
 
     for id in range(8):                                 # Repeat the code for each sensor.
-        value = light_sensor(id, addr)                  # Save sensor value as a variable.
+        value = light_sensor(id, addr, port)            # Save sensor value as a variable.
 
         if treshold_min < value < treshold_max:         # Check if sensor value is between
                                                         # the tresholds.
@@ -147,11 +158,11 @@ def follow(speed, treshold_min, treshold_max, addr):    # Takes speed as int, tr
 
 
 
-def keep_distance(speed, treshold, addr):   # Takes speed as int, treshold
-                                            # as int and addr as tuple (ip, port).
+def keep_distance(speed, treshold, addr, port): # Takes speed as int, treshold
+                                                # as int and addr as tuple (ip, port).
 
-    for id in range(8):                     # Repeat the code for each sensor.
-        value = light_sensor(id, addr)      # Save sensor value as a variable.
+    for id in range(8):                         # Repeat the code for each sensor.
+        value = light_sensor(id, addr, port)    # Save sensor value as a variable.
 
         if value < treshold:                # Check if sensor value is getting lower
                                             # then the treshold value.
