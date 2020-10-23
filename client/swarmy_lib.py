@@ -2,7 +2,7 @@
 
     Swarmy Library
     by: c0mplh4cks
-    version 1.0.2
+    version 1.2.1
 
     This code is focused on functional programming to keep it simple.
     Use of objects is minimized as much as possible.
@@ -89,14 +89,14 @@ def light_sensor(id, addr, port):       # Takes id of sensor as
     return send_recv(msg, addr, port)   # tuple (ip, port).
 
 
-def led_display(id, r, g, b, addr):
-    msg = "C{};{};{};{};".format(id, r, g, b)
-    return send(msg, addr)
+def led_display(id, r, g, b, addr):                     # Takes id of LED as
+    msg = "C{};{};{};{};".format(id, r, g, b)           # int,  r, g and b
+    return send(msg, addr)                              # as colorvalues and.
+                                                        # addr as tuple (ip, port).
 
-
-def text_display(first, second, third, addr):
-    msg = "D{};{};{};".format(first, second, third)
-    return send(msg, addr)
+def text_display(first, second, third, addr):           # Takes first, second and
+    msg = "D{};{};{};".format(first, second, third)     # third as string and takes
+    return send(msg, addr)                              # addr as tuple (ip, port).
 
 
 
@@ -151,8 +151,8 @@ def follow(speed, treshold_min, treshold_max, addr, port):      # Takes speed as
             l, r = 0, 0         # If the IR values aren't between
                                 # the tresholds, stop moving.
 
-    motor_left(l, addr)     # Send the left and right
-    motor_right(r, addr)    # motor speeds to the Swarmy.
+    motor_left(l, addr)         # Send the left and right
+    motor_right(r, addr)        # motor speeds to the Swarmy.
 
 
 
