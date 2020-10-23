@@ -2,7 +2,7 @@
 
   Swarmy
   by: c0mplh4cks
-  version 1.0.4
+  version 1.2.1
 
     Description
     This is the code which is supposed to run
@@ -30,6 +30,8 @@
 
 
 /* === Definitions === */
+PCF8574 pcf8574(0x20);
+
 int irLedSwitchPin = 3;
 
 
@@ -283,7 +285,7 @@ String read_packet()
 
   } else if (command == 'L') {
     out = irLedSwitch( args[0].toInt() );
-    
+
   } else {
     out = 1;
 
@@ -326,16 +328,22 @@ void setup()
 
   WiFi.begin(ssid, password);
 
-  oledDisplayInfo("Swarmy", "Connecting to...", ssid);
+  oledDisplayInfo("Swarmy", "connecting to...", ssid);
 
-  Serial.print("Connecting to ");
+  Serial.print("connecting to ");
   Serial.println(ssid);
   while (WiFi.status() != WL_CONNECTED)
   {
-    delay(500);
+    delay(250);
+    for (int i=0; i<ledAmount; i++) { ledDisplay(i, 255, 255, 0); }
+    delay(250);
+    for (int i=0; i<ledAmount; i++) { ledDisplay(i, 0, 0, 0); }
     Serial.print(".");
+
   }
+
   Serial.println("Connected!");
+  for (int i=0; i<ledAmount; i++) { ledDisplay(i, 0, 255, 0); }
 
 
   udp.begin(port);
