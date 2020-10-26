@@ -2,18 +2,13 @@
 
     Swarmy Library
     by: c0mplh4cks
-    version 1.2.1
-
-    This code is focused on functional programming to keep it simple.
-    Use of objects is minimized as much as possible.
+    version 1.3.0
 
 
     + Description +
 
         This is the library for the Swarmy robot containing
-        functions to control the robot remotely. Two of the
-        functions are examples to show what can be done with
-        the software.
+        functions to control the robot remotely.
 
 
 """
@@ -23,188 +18,90 @@
 
 
 # === Importing Library's === #
-from socket import socket, AF_INET, SOCK_DGRAM, timeout      # Import needed for networking.
-from time import sleep
+from socket import socket, AF_INET, SOCK_DGRAM, timeout     # Import required for networking.
+from time import sleep                                      # Import required for time based delays.
 
 
 
 
 
 # === Networking === #
-def send(msg, addr):                    # Networking Functions which
-    s = socket(AF_INET, SOCK_DGRAM)     # allows to communicate with
-                                        # the Swarmy. Takes message
-                                        # as string and the address
-    try:                                # of the Swarmy as tuple (ip, port).
-        s.sendto(msg.encode(), addr)
-    except KeyboardInterrupt:
-        pass
-
-    s.close()
-    return 1
+# Requires a tuple containing the IP and PORT as (IP, PORT).
+class Swarmy:                                               # Swarmy Object containing communication functions.
+    def __init__(self, addr):
+        self.addr = addr                                    # A tuple containing the IP and PORT (IP, PORT).
+        self.sock = socket(AF_INET, SOCK_DGRAM)             # Socket object required for communication.
+        self.sock.settimeout(0.05)                          # Timeout for evading code obstructions.
 
 
+    # Requires the msg needed to be send as a string.
+    def send(self, msg):                                    # Send function which gets used when
+        try:                                                # sending a message (msg) when it's
+            self.socket.sendto(msg.encode(), self.addr)     # not required to receive data.
 
-def send_recv(msg, addr, port):         # Same Function as above
-    s = socket(AF_INET, SOCK_DGRAM)     # except this one requires
-    s.settimeout(0.05)                  # the Swarmy to respond.
-    s.bind(("0.0.0.0", port))
-
-    while True:
-        try:
-            s.sendto(msg.encode(), addr)
-            rsp, addr = s.recvfrom(1024)
-            s.close()
-            return int( rsp.decode() )
-        except timeout:
-            sleep(0.05)
         except KeyboardInterrupt:
-            break
+            pass
 
-    s.close()
-    return 0
+        return 1
+
+    # Requires the msg needed to be send as a string.
+    def send_recv(self, msg):                                   # Send and receive function which
+        while True:                                             # gets used when sending a message
+            try:                                                # (msg) when it's required to receive
+                self.socket.sendto(msg.encode(), self.addr)     # data from the Swarmy.
+                resp, addr = self.sock.recvfrom(1024)
+                return int( rsp.decode() )
+
+            except timeout:                         # Timout exceptions preventing
+                sleep(0.05)                         # obstructions when failing to
+                                                    # receive a response.
+            except KeyboardInterrupt:
+                break
+
+        return 0
 
 
 
 
 
 # === Standard I/O Functions === #
-def motor_left(speed, addr):            # Takes speed as int and
-    msg = "A{};".format(speed)          # addr as tuple (ip, port)
-    return send(msg, addr)
+# Each functions requires a Swarmy object of the Swarmy which is
+# supposed to receive the data.
 
 
-def motor_right(speed, addr):           # Same parameters as
-    msg = "B{};".format(speed)          # motor_left function.
-    return send(msg, addr)
+# Requires a speed in the range from -255 to 255 as int.
+def motor_left(swarmy, speed=0):        # Function to control the
+    msg = "A{};".format(speed)          # speed of the left motor.
+    return swarmy.send(msg)
 
 
-def light_switch(bool, addr, port):     # Takes bool as boolean
-    msg = "L{};".format(bool)           # and addr as tuple (ip, port).
-    return send_recv(msg, addr, port)
+# Requires a speed in the range from -255 to 255 as int.
+def motor_right(swarmy, speed=0):       # Function to control the
+    msg = "B{};".format(speed)          # speed of the right motor.
+    return swarmy.send(msg)
 
 
-def light_sensor(id, addr, port):       # Takes id of sensor as
-    msg = "I{};".format(id)             # int and addr as
-    return send_recv(msg, addr, port)   # tuple (ip, port).
+# Requires a 0 as int for off or a 1 as int for on.
+def light_switch(swarmy, bool=0):       # Function to switch the
+    msg = "L{};".format(bool)           # IR LEDs on/off.
+    return swarmy.send_recv(msg)
 
 
-def led_display(id, r, g, b, addr):                     # Takes id of LED as
-    msg = "C{};{};{};{};".format(id, r, g, b)           # int,  r, g and b
-    return send(msg, addr)                              # as colorvalues and.
-                                                        # addr as tuple (ip, port).
-
-def text_display(first, second, third, addr):           # Takes first, second and
-    msg = "D{};{};{};".format(first, second, third)     # third as string and takes
-    return send(msg, addr)                              # addr as tuple (ip, port).
+# Requires a int ranging from 0 to 7 for the id of the IR sensor.
+def light_sensor(swarmy, id=0):         # Function to receive the
+    msg = "I{};".format(id)             # data of the IR sensors.
+    return swarmy.send_recv(msg)
 
 
+# Requires a int ranging from 0 to 3 for the id of the RGB LED
+# followed by the red, green and blue values as three integers.
+def led_display(swarmy, id, r=0, g=0, b=0):     # Function to set a color
+    msg = "C{};{};{};{};".format(id, r, g, b)   # per RGB LED.
+    return swarmy.send(msg)
 
 
-
-# === Behavior Example Functions === #
-def follow(speed, treshold_min, treshold_max, addr, port):      # Takes speed as int, treshold
-                                                                # as int and addr as tuple (ip, port).
-
-    for id in range(8):                                 # Repeat the code for each sensor.
-        value = light_sensor(id, addr, port)            # Save sensor value as a variable.
-
-        if treshold_min < value < treshold_max:         # Check if sensor value is between
-                                                        # the tresholds.
-
-            if id == 0:     # North         # If the ID of the sensor is 0,
-                l = speed                   # then use the given speeds.
-                r = speed                   # Goes the same way for the other
-                                            # ID conditions.
-            elif id == 1:   # North East
-                l = speed
-                r = 0
-
-            elif id == 2:   # East
-                l = speed
-                r = -speed
-
-            elif id == 3:   # South East
-                l = speed
-                r = -speed
-
-            elif id == 4:   # South
-                l = -speed
-                r = speed
-
-            elif id == 5:   # South West
-                l = -speed
-                r = speed
-
-            elif id == 6:   # West
-                l = -speed
-                r = speed
-
-            elif id == 7:   # North West
-                l = 0
-                r = speed
-
-            break               # This break prevents the code
-                                # from unnecessery repeats.
-
-        else:
-            l, r = 0, 0         # If the IR values aren't between
-                                # the tresholds, stop moving.
-
-    motor_left(l, addr)         # Send the left and right
-    motor_right(r, addr)        # motor speeds to the Swarmy.
-
-
-
-
-
-def keep_distance(speed, treshold, addr, port): # Takes speed as int, treshold
-                                                # as int and addr as tuple (ip, port).
-
-    for id in range(8):                         # Repeat the code for each sensor.
-        value = light_sensor(id, addr, port)    # Save sensor value as a variable.
-
-        if value < treshold:                # Check if sensor value is getting lower
-                                            # then the treshold value.
-
-            if id == 0:     # North         # If the ID of the sensor is 0,
-                l = -speed                  # then use the given speeds.
-                r = -speed                  # Goes the same way for the other
-                                            # ID conditions.
-            elif id == 1:   # North East
-                l = -speed
-                r = speed
-
-            elif id == 2:   # East
-                l = -speed
-                r = speed
-
-            elif id == 3:   # South East
-                l = 0
-                r = speed
-
-            elif id == 4:   # South
-                l = speed
-                r = speed
-
-            elif id == 5:   # South West
-                l = speed
-                r = 0
-
-            elif id == 6:   # West
-                l = speed
-                r = -speed
-
-            elif id == 7:   # North West
-                l = speed
-                r = -speed
-
-            break           # This break prevents the code
-                            # from unnecessery repeats.
-
-        else:
-            l, r = 0, 0     # If the Swarmy isn't to close
-                            # to an other, stop moving.
-
-    motor_left(l, addr)     # Send the left and right
-    motor_right(r, addr)    # motor speeds to the Swarmy.
+# Requires three strings for the first second and third row of
+# the text display.
+def text_display(swarmy, first="", second="", third=""):    # Function to set the
+    msg = "D{};{};{};".format(first, second, third)         # text of the display
+    return swarmy.send(msg)                                 # per row.
