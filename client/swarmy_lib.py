@@ -35,7 +35,7 @@ class Swarmy:                                               # Swarmy Object cont
 
 
     # Requires the msg needed to be send as a string.
-    def send(self, msg):                                    # Send function which gets used when
+    def send(self, msg):                                    # Send method which gets used when
         try:                                                # sending a message (msg) when it's
             self.socket.sendto(msg.encode(), self.addr)     # not required to receive data.
 
@@ -45,7 +45,7 @@ class Swarmy:                                               # Swarmy Object cont
         return 1
 
     # Requires the msg needed to be send as a string.
-    def send_recv(self, msg):                                   # Send and receive function which
+    def send_recv(self, msg):                                   # Send and receive method which
         while True:                                             # gets used when sending a message
             try:                                                # (msg) when it's required to receive
                 self.socket.sendto(msg.encode(), self.addr)     # data from the Swarmy.
@@ -61,47 +61,39 @@ class Swarmy:                                               # Swarmy Object cont
         return 0
 
 
+    # Requires a speed in the range from -255 to 255 as int.
+    def motor_left(self, speed=0):          # Method to control the
+        msg = "A{};".format(speed)          # speed of the left motor.
+        return self.send(msg)
 
 
-
-# === Standard I/O Functions === #
-# Each functions requires a Swarmy object of the Swarmy which is
-# supposed to receive the data.
-
-
-# Requires a speed in the range from -255 to 255 as int.
-def motor_left(swarmy, speed=0):        # Function to control the
-    msg = "A{};".format(speed)          # speed of the left motor.
-    return swarmy.send(msg)
+    # Requires a speed in the range from -255 to 255 as int.
+    def motor_right(self, speed=0):         # Method to control the
+        msg = "B{};".format(speed)          # speed of the right motor.
+        return self.send(msg)
 
 
-# Requires a speed in the range from -255 to 255 as int.
-def motor_right(swarmy, speed=0):       # Function to control the
-    msg = "B{};".format(speed)          # speed of the right motor.
-    return swarmy.send(msg)
+    # Requires a 0 as int for off or a 1 as int for on.
+    def light_switch(self, bool=0):         # Method to switch the
+        msg = "L{};".format(bool)           # IR LEDs on/off.
+        return self.send_recv(msg)
 
 
-# Requires a 0 as int for off or a 1 as int for on.
-def light_switch(swarmy, bool=0):       # Function to switch the
-    msg = "L{};".format(bool)           # IR LEDs on/off.
-    return swarmy.send_recv(msg)
+    # Requires a int ranging from 0 to 7 for the id of the IR sensor.
+    def light_sensor(self, id=0):           # Method to receive the
+        msg = "I{};".format(id)             # data of the IR sensors.
+        return self.send_recv(msg)
 
 
-# Requires a int ranging from 0 to 7 for the id of the IR sensor.
-def light_sensor(swarmy, id=0):         # Function to receive the
-    msg = "I{};".format(id)             # data of the IR sensors.
-    return swarmy.send_recv(msg)
+    # Requires a int ranging from 0 to 3 for the id of the RGB LED
+    # followed by the red, green and blue values as three integers.
+    def led_display(self, id, r=0, g=0, b=0):       # Method to set a color
+        msg = "C{};{};{};{};".format(id, r, g, b)   # per RGB LED.
+        return self.send(msg)
 
 
-# Requires a int ranging from 0 to 3 for the id of the RGB LED
-# followed by the red, green and blue values as three integers.
-def led_display(swarmy, id, r=0, g=0, b=0):     # Function to set a color
-    msg = "C{};{};{};{};".format(id, r, g, b)   # per RGB LED.
-    return swarmy.send(msg)
-
-
-# Requires three strings for the first second and third row of
-# the text display.
-def text_display(swarmy, first="", second="", third=""):    # Function to set the
-    msg = "D{};{};{};".format(first, second, third)         # text of the display
-    return swarmy.send(msg)                                 # per row.
+    # Requires three strings for the first second and third row of
+    # the text display.
+    def text_display(self, first="", second="", third=""):      # Method to set the
+        msg = "D{};{};{};".format(first, second, third)         # text of the display
+        return self.send(msg)                                   # per row.
