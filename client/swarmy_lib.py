@@ -51,7 +51,7 @@ class Swarmy:                                               # Swarmy Object cont
             try:                                                # (msg) when it's required to receive
                 self.sock.sendto(msg.encode(), self.addr)     # data from the Swarmy.
                 resp, addr = self.sock.recvfrom(1024)
-                return int( rsp.decode() )
+                return int( resp.decode() )
 
             except timeout:                         # Timout exceptions preventing
                 sleep(0.05)                         # obstructions when failing to
