@@ -85,6 +85,11 @@ class Swarmy:
         return self.send(msg)
 
 
+    def led_brightness(self, brightness):
+        msg = f"W{ brightness};"
+        return self.send(msg)
+
+
     def text_display(self, first="", second="", third=""):
         msg = f"D{ first };{ second };{ third };"
         return self.send(msg)
