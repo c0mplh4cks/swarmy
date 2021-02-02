@@ -51,8 +51,6 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(ledAmount, ledPin, NEO_GRB + NEO_KHZ
 
 U8G2_SSD1306_128X32_UNIVISION_F_SW_I2C u8g2(U8G2_R0, SCL, SDA, U8X8_PIN_NONE);
 
-WiFiUDP udp;
-
 const int freq = 5000;
 const int resolution = 8;
 
@@ -62,11 +60,10 @@ const char* ssid = "Hello3";
 const char* password = "blablabla31415";
 
 int port = 8888;
-char packet[255];
-int packetSize;
-char data[1];
-int packet_id;
+int packetSize = 0;
+String packet;
 
+WiFiServer wifiServer(port);
 
 
 /* === Functions === */
@@ -214,17 +211,17 @@ Serial.print(" Motor B speed: ");
 
 
 /* === Read Packet Function === */
+
 int read_packet()
 {
-  packet_id = packet[0];
-  char command = packet[1];
+  char command = packet[0];
   String args[6];
   int id = 0;
   String build = "";
   int out;
 
 
-  for (int i=2; i<packetSize; i++) {
+  for (int i=1; i<packetSize; i++) {
 
     if (packet[i] == ';') {
       args[id] = build;
@@ -291,15 +288,15 @@ void setup()
     ledcAttachPin(motorPins[i], motor[i]);
   }
 
-pinMode(irLedSwitchPin, OUTPUT);
-pinMode(S0, OUTPUT);
-pinMode(S1, OUTPUT);
-pinMode(S2, OUTPUT);
-
-digitalWrite(irLedSwitchPin, LOW);
-digitalWrite(S0, HIGH);
-digitalWrite(S1, HIGH);
-digitalWrite(S2, HIGH);
+  pinMode(irLedSwitchPin, OUTPUT);
+  pinMode(S0, OUTPUT);
+  pinMode(S1, OUTPUT);
+  pinMode(S2, OUTPUT);
+  
+  digitalWrite(irLedSwitchPin, LOW);
+  digitalWrite(S0, HIGH);
+  digitalWrite(S1, HIGH);
+  digitalWrite(S2, HIGH);
 
 
   Serial.begin(115200);
@@ -325,7 +322,7 @@ digitalWrite(S2, HIGH);
   for (int i=0; i<ledAmount; i++) { ledDisplay(i, 0, 255, 0); }
 
 
-  udp.begin(port);
+  wifiServer.begin();
   Serial.print("PORT: ");
   Serial.println(port);
   Serial.print("IP: ");
@@ -340,37 +337,34 @@ digitalWrite(S2, HIGH);
 void loop()
 {
 
-  //for (uint16_t i=0; i<ledAmount; i++) {
-    //uint32_t color = strip.Color(rgbColor[i][0], rgbColor[i][1], rgbColor[i][2]);
-    //strip.setPixelColor(i, color);
-    //delay(10);
-    strip.show();   
-  //}
+  WiFiClient client = wifiServer.available();
 
-  packetSize = udp.parsePacket();
-  if (packetSize) {
-
-    Serial.print(" Received UDP packet from: ");
-    Serial.println( udp.remoteIP().toString().c_str() );
-
-    int len = udp.read(packet, 255);
-    if (len > 0) {
-      packet[len] = 0;
+  if (client) {
+    if (client.connected())
+    {
+      Serial.println("Client Connected");
     }
 
-    int response = read_packet();
-
-    udp.beginPacket(udp.remoteIP(), udp.remotePort());
-
-    data[0] = response;
-    data[1] = packet_id;
-    udp.write((uint8_t *)data, 2);
-
-    udp.endPacket();
-
+    while (client.connected()) {
+      while (client.available() > 0) {
+        char receivedch = client.read();
+        if (receivedch != 0) {
+         packet = packet + receivedch; 
+        } else {
+          Serial.println(packet);
+          packetSize = packet.length();
+          int response = read_packet();
+          client.write(response);
+          packet = "";
+        }
+      }
+      //Send Data to connected client
+      while (Serial.available() > 0)
+      {
+        client.write(Serial.read());
+      }
+    }
+    client.stop();
+    Serial.println("Client disconnected");
   }
-
-  delay(10);
-
-
 }
