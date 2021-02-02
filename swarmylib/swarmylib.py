@@ -10,9 +10,10 @@
 
 
 # === Importing Dependencies === #
-from socket import socket, AF_INET, SOCK_DGRAM, timeout
+from socket import socket, AF_INET, SOCK_STREAM, timeout
+from threading import Thread
 from struct import pack
-from time import sleep
+from time import sleep, time
 
 
 
@@ -21,75 +22,86 @@ from time import sleep
 
 
 # === Networking === #
-class Swarmy:
+class Swarmy(Thread):
     def __init__(self, addr):
-        self.addr = addr
-        self.sock = socket(AF_INET, SOCK_DGRAM)
-        self.sock.settimeout(0.5)
+        super().__init__()
+
+        self.sock = socket(AF_INET, SOCK_STREAM)
+        self.sock.connect(addr)
+        self.sock.settimeout(0.2)
+
+        self.daemon = True
+
+        self.tasks = []
         self.id = 0
 
+        self.ir = [0, 0, 0, 0, 0, 0, 0, 0]
 
-    def send(self, msg):
-        errors = 0
-        while errors < 3:
-
-            self.id = (self.id + 1) %256
-
-            packet = b"".join([
-                pack(">B", self.id),
-                msg.encode(),
-            ])
-            self.sock.sendto(packet, self.addr)
-
-            try:
-                resp, addr = self.sock.recvfrom(2)
-
-            except timeout:
-                errors += 1
-                continue
-
-            data, id = resp
-
-            if id == self.id:
-                return data
-            else:
-                errors += 1
-
-
-        return 0
+        self.start()
 
 
 
-    def motor_left(self, speed=0):
-        msg = f"A{ speed };"
-        return self.send(msg)
+    def add_task(self, action, parameters):
+        self.tasks.append( [action, parameters] )
 
 
-    def motor_right(self, speed=0):
-        msg = f"B{ speed };"
-        return self.send(msg)
+
+    def run(self):
+        t = time()
+
+        while True:
+            
+            if len(self.tasks) > 0:
+                action, parameters = self.tasks[0]
+                self.tasks = self.tasks[1:]
+
+                self.sock.send( action(*parameters).encode() + b"\x00" )
+
+                try:
+                    packet = self.sock.recv(1)
+                    if len(packet) == 8:
+                        for i in len(self.ir):
+                            self.ir[i] = packet[i]
+
+                except (timeout):
+                    pass
 
 
-    def light_switch(self, bool=0):
-        msg = f"L{ bool };"
-        return self.send(msg)
+            elif (time() - t) > 0.5:
+                t = time()
+                for i in range(8):
+                    self.add_task(self.sensor(i))
 
 
-    def light_sensor(self, id=0):
-        msg = f"I{ id };"
-        return self.send(msg)
+
+    def motor(self, lspeed=0, rspeed=0):
+        self.add_task(self.motorl, [lspeed])
+        self.add_task(self.motorr, [rspeed])
 
 
-    def led_display(self, id, r=0, g=0, b=0):
-        msg = f"C{ id };{ r };{ g };{ b };"
-        return self.send(msg)
+    def motorl(self, speed=0):
+        return f"A{ speed };\x00"
 
 
-    def led_brightness(self, brightness):
-        msg = f"W{ brightness};"
-        return self.send(msg)
+    def motorr(self, speed=0):
+        return f"B{ speed };\x00"
 
 
-    def text_display(self, first="", second="", third=""):
-        msg = f"D{ first };{ second };{ third };"
-        return self.send(msg)
+    def sensor(self, id=0):
+        return f"I{ id };\x00"
+
+
+    def switch(self, bool=0):
+        return f"L{ bool };\x00"
+
+
+    def rgb(self, id=0, r=0, g=0, b=0):
+        return f"C{ id };{ r };{ g };{ b };\x00"
+
+
+    def bright(self, brightness):
+        return f"W{ brightness};\x00"
+
+
+    def text(self, first="", second="", third=""):
+        return f"D{ first };{ second };{ third };\x00"

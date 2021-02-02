@@ -2,7 +2,7 @@
 
   Swarmy
   by: c0mplh4cks
-  version 1.2.1
+  version 1.0.4
 
     Description
     This is the code which is supposed to run
@@ -21,69 +21,51 @@
 
 #include "Adafruit_NeoPixel.h"
 #include "U8g2lib.h"
-#include "PCF8574.h"
 #include "Wire.h"
 #include "Adafruit_Sensor.h"
 
-
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 
 
 
 /* === Definitions === */
-PCF8574 pcf8574(0x20);
 
-int irLedSwitchPin = 3;
+int irLedSwitchPin = 2;
+
+int motorPWMA, motorPWMB;
+int motorPins[4] = {19, 18, 17, 16}; // M1A, M1B, M2A, M2B
+int motor[4] = {0, 1, 2, 3};
 
 
-int ledPin = 25;
-int ledAmount = 4;
-int ledBrightness = 21;
+int S0 = 27;
+int S1 = 26;
+int S2 = 25;
+
+
+int ledPin = 33;
+const int ledAmount = 4;
+int ledBrightness = 10;
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(ledAmount, ledPin, NEO_GRB + NEO_KHZ800);
 
-
 U8G2_SSD1306_128X32_UNIVISION_F_SW_I2C u8g2(U8G2_R0, SCL, SDA, U8X8_PIN_NONE);
 
-
 WiFiUDP udp;
-
-
-int encoderOutput = 32;
-
-volatile long encoderValue = 0;
-int interval = 50;
-long previousMillis = 0;
-long currentMillis = 0;
-float rpm = 0;
-
-
-int motorPWMA, motorPWMB;
-int motorPins[4] = {33, 32, 26, 27}; // M1A, M1B, M2A, M2B
-int motor[4] = {0, 1, 2, 3};
-
 
 const int freq = 5000;
 const int resolution = 8;
 
-int encoderLeftPin = 16;
-int encoderRightPin = 14;
-
-
-
-
-
-
 
 /* === Network === */
-const char* ssid = "Hello2";
+const char* ssid = "Hello3";
 const char* password = "blablabla31415";
 
 int port = 8888;
 char packet[255];
 int packetSize;
-char data[64];
-
-
+char data[1];
+int packet_id;
 
 
 
@@ -111,64 +93,66 @@ int oledDisplayInfo(String first, String second, String third)
 
 int irLedSwitch(int s) {
   if (s == 0) {
-    pcf8574.digitalWrite(irLedSwitchPin, LOW);
+    digitalWrite(irLedSwitchPin, LOW);
+    Serial.print(" IrledOFF ");
   } else if (s == 1) {
-    pcf8574.digitalWrite(irLedSwitchPin, HIGH);
+    digitalWrite(irLedSwitchPin, HIGH);
+    Serial.print(" IrledON ");
   }
 
   return 1;
 }
 
 
-
 int irSensor(int id)
 {
 
   if (id == 0) {
-    pcf8574.digitalWrite(0, LOW);
-    pcf8574.digitalWrite(1, LOW);
-    pcf8574.digitalWrite(2, LOW);
+  
+    digitalWrite(S0, LOW);
+    digitalWrite(S1, LOW);
+    digitalWrite(S2, LOW);
 
   } else if (id == 1) {
-    pcf8574.digitalWrite(0, HIGH);
-    pcf8574.digitalWrite(1, LOW);
-    pcf8574.digitalWrite(2, LOW);
+    digitalWrite(S0, HIGH);
+    digitalWrite(S1, LOW);
+    digitalWrite(S2, LOW);
 
   } else if (id == 2) {
-    pcf8574.digitalWrite(0, LOW);
-    pcf8574.digitalWrite(1, HIGH);
-    pcf8574.digitalWrite(2, LOW);
+    digitalWrite(S0, LOW);
+    digitalWrite(S1, HIGH);
+    digitalWrite(S2, LOW);
 
   } else if (id == 3) {
-    pcf8574.digitalWrite(0, HIGH);
-    pcf8574.digitalWrite(1, HIGH);
-    pcf8574.digitalWrite(2, LOW);
+    digitalWrite(S0, HIGH);
+    digitalWrite(S1, HIGH);
+    digitalWrite(S2, LOW);
 
   } else if (id == 4) {
-    pcf8574.digitalWrite(0, LOW);
-    pcf8574.digitalWrite(1, LOW);
-    pcf8574.digitalWrite(2, HIGH);
+    digitalWrite(S0, LOW);
+    digitalWrite(S1, LOW);
+    digitalWrite(S2, HIGH);
 
   } else if (id == 5) {
-    pcf8574.digitalWrite(0, HIGH);
-    pcf8574.digitalWrite(1, LOW);
-    pcf8574.digitalWrite(2, HIGH);
+    digitalWrite(S0, HIGH);
+    digitalWrite(S1, LOW);
+    digitalWrite(S2, HIGH);
 
   } else if (id == 6) {
-    pcf8574.digitalWrite(0, LOW);
-    pcf8574.digitalWrite(1, HIGH);
-    pcf8574.digitalWrite(2, HIGH);
+    digitalWrite(S0, LOW);
+    digitalWrite(S1, HIGH);
+    digitalWrite(S2, HIGH);
 
   } else {
-    pcf8574.digitalWrite(0, HIGH);
-    pcf8574.digitalWrite(1, HIGH);
-    pcf8574.digitalWrite(2, HIGH);
+    digitalWrite(S0, HIGH);
+    digitalWrite(S1, HIGH);
+    digitalWrite(S2, HIGH);
 
   }
-
-  return analogRead(A0);
+  Serial.print(" Irled: ");
+  Serial.print( map(analogRead(34), 0, 4096, 1, 255));
+  return map(analogRead(34), 0, 4096, 1, 255);
 }
-
 
 
 int ledDisplay(uint16_t id, int r, int g, int b)
@@ -180,11 +164,18 @@ int ledDisplay(uint16_t id, int r, int g, int b)
   return 1;
 }
 
+int changeBrightness (int brightness)
+{
+  strip.setBrightness(brightness);
+  strip.show();
 
+ return 1;
+}
 
 int motorA(int speed)                       // Change speed of motor A.
 {
-
+ Serial.print(" Motor A speed: ");
+ Serial.print(speed);
   if (speed >= 0) {
     speed = constrain(abs(speed), 0, 255);
     ledcWrite(motor[0], 255);
@@ -201,10 +192,10 @@ return 1;
 }
 
 
-
 int motorB(int speed)
 {
-
+Serial.print(" Motor B speed: ");
+ Serial.print(speed);
   if (speed >= 0) {
     speed = constrain(abs(speed), 0, 255);
     ledcWrite(motor[2], 255);
@@ -222,39 +213,18 @@ int motorB(int speed)
 
 
 
-void updateEncoder()
-{
-  encoderValue++;
-}
-
-
-
-void rpmCount()
-{
-  currentMillis = millis();
-  if ( (currentMillis - previousMillis) > interval ) {
-    rpm = (float)(encoderValue * 1200 / encoderOutput);
-
-    encoderValue = 0;
-  }
-}
-
-
-
-
-
 /* === Read Packet Function === */
-String read_packet()
+int read_packet()
 {
-
-  char command = packet[0];
+  packet_id = packet[0];
+  char command = packet[1];
   String args[6];
   int id = 0;
   String build = "";
   int out;
 
 
-  for (int i=1; i<packetSize; i++) {
+  for (int i=2; i<packetSize; i++) {
 
     if (packet[i] == ';') {
       args[id] = build;
@@ -286,21 +256,23 @@ String read_packet()
   } else if (command == 'L') {
     out = irLedSwitch( args[0].toInt() );
 
+  } else if (command == 'W') {
+    out = changeBrightness( args[0].toInt() );
+
   } else {
     out = 1;
 
   }
 
-  return String(out);
+  return out;
 }
-
-
-
 
 
 /* === Setup === */
 void setup()
 {
+  
+  //WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
   u8g2.begin();
   oledDisplayInfo("Swarmy", "setup...", "");
 
@@ -310,6 +282,7 @@ void setup()
 
   for (int i=0; i<ledAmount; i++) {
     ledDisplay(i, 0, 0, 0);
+    delay(10);
   }
 
 
@@ -318,9 +291,15 @@ void setup()
     ledcAttachPin(motorPins[i], motor[i]);
   }
 
+pinMode(irLedSwitchPin, OUTPUT);
+pinMode(S0, OUTPUT);
+pinMode(S1, OUTPUT);
+pinMode(S2, OUTPUT);
 
-  attachInterrupt(digitalPinToInterrupt(encoderRightPin), updateEncoder, RISING);
-  previousMillis = millis();
+digitalWrite(irLedSwitchPin, LOW);
+digitalWrite(S0, HIGH);
+digitalWrite(S1, HIGH);
+digitalWrite(S2, HIGH);
 
 
   Serial.begin(115200);
@@ -334,15 +313,15 @@ void setup()
   Serial.println(ssid);
   while (WiFi.status() != WL_CONNECTED)
   {
-    delay(250);
+    delay(100);
     for (int i=0; i<ledAmount; i++) { ledDisplay(i, 255, 255, 0); }
-    delay(250);
+    delay(100);
     for (int i=0; i<ledAmount; i++) { ledDisplay(i, 0, 0, 0); }
     Serial.print(".");
 
   }
-
   Serial.println("Connected!");
+
   for (int i=0; i<ledAmount; i++) { ledDisplay(i, 0, 255, 0); }
 
 
@@ -357,18 +336,21 @@ void setup()
 }
 
 
-
-
-
 /* === Loop === */
 void loop()
 {
-  rpmCount();
+
+  //for (uint16_t i=0; i<ledAmount; i++) {
+    //uint32_t color = strip.Color(rgbColor[i][0], rgbColor[i][1], rgbColor[i][2]);
+    //strip.setPixelColor(i, color);
+    //delay(10);
+    strip.show();   
+  //}
 
   packetSize = udp.parsePacket();
   if (packetSize) {
 
-    Serial.print("Received UDP packet from: ");
+    Serial.print(" Received UDP packet from: ");
     Serial.println( udp.remoteIP().toString().c_str() );
 
     int len = udp.read(packet, 255);
@@ -376,12 +358,13 @@ void loop()
       packet[len] = 0;
     }
 
-    String response = read_packet();
+    int response = read_packet();
 
     udp.beginPacket(udp.remoteIP(), udp.remotePort());
 
-    response.toCharArray(data, 64);
-    udp.write((uint8_t *)data, sizeof(data));
+    data[0] = response;
+    data[1] = packet_id;
+    udp.write((uint8_t *)data, 2);
 
     udp.endPacket();
 
